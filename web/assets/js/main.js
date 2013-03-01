@@ -1,3 +1,5 @@
+var API_URL = 'http://teaconf.com/server/api';
+
 require.config({
     shim: {
         underscore: {
