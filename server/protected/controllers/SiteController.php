@@ -2,36 +2,83 @@
 
 class SiteController extends Controller
 {
-	public function actionLogin()
+    /**
+     * 用户注册
+     *
+     * @uri site/register
+     * @method POST
+     *
+     * @param string $email
+     * @param string $name
+     * @param string $password
+     */
+    public function actionRegister($email, $name, $password)
+    {
+        if(!Yii::app()->user->getIsGuest())
+            $this->response('Logged', Response::BAD_REQUEST);
+
+        $userPassword = Bcrypt::hash(trim($_POST['password']));
+        $user = new User();
+        $user->email = strtolower(trim($email));
+        $user->name = trim($name);
+        $user->password = $userPassword;
+        if($user->save())
+        {
+            list($large, $middle, $small) = AvatarUtil::fetch($user->email);
+            if(!empty($large))
+            {
+                $user->avatar_large = $large;
+                $user->avatar_middle = $middle;
+                $user->avatar_small = $small;
+                $user->save();
+            }
+            $this->response($user, Response::OK);
+        }
+        $this->response($user->getErrorMessage(), Response::BAD_REQUEST);
+    }
+
+    /**
+     * 用户登录
+     *
+     * @uri site/login
+     * @method POST
+     *
+     * @param string $id name or email
+     * @param string $password
+     * @param boolean $rememberMe
+     */
+	public function actionLogin($id, $password, $rememberMe = false)
 	{
-		$model=new LoginForm;
+        if(!Yii::app()->user->getIsGuest())
+            $this->response('Logged', Response::BAD_REQUEST);
 
-		if(isset($_POST['ajax']) && $_POST['ajax']==='login-form')
-		{
-			echo CActiveForm::validate($model);
-			Yii::app()->end();
-		}
-
-		if(isset($_POST['LoginForm']))
-		{
-			$model->attributes=$_POST['LoginForm'];
-			if($model->validate() && $model->login())
-				$this->redirect(Yii::app()->user->returnUrl);
-		}
-		$this->render('login',array('model'=>$model));
+        $identity = new UserIdentity($id, $password);
+        if($identity->authenticate())
+        {
+			$duration = $rememberMe ? 3600 * 24 * 30 : 0; // 30 days
+            Yii::app()->user->login($identity, $duration);
+            $this->response($identity->id, Response::OK);
+        }
+        $this->response('Invalid ID or password', Response::BAD_REQUEST);
 	}
 
+    /**
+     * 用户退出
+     *
+     * @uri site/logout
+     * @method PUT
+     */
 	public function actionLogout()
 	{
+        if(Yii::app()->user->getIsGuest())
+            $this->response('Failed', Response::BAD_REQUEST);
 		Yii::app()->user->logout();
-		$this->redirect(Yii::app()->homeUrl);
+        $this->response('Success', Response::OK);
 	}
 
     public function actionError()
     {
 		if($error = Yii::app()->errorHandler->error)
-		{
-            $this->response($error['message'], $error['code']);
-		}
+            defined(YII_DEBUG) ? print_r($error); : $this->response($error['message'], $error['code']);
     }
 }

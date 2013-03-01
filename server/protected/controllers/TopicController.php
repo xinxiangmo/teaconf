@@ -3,7 +3,7 @@
 class TopicController extends Controller
 {
     /**
-     * List topic
+     * 所有话题
      *
      * uri: /topics
      * method: GET
@@ -18,100 +18,88 @@ class TopicController extends Controller
     }
 
     /**
-     * Create topic
+     * 创建话题
      *
      * uri: /topics
      * method: POST
+     *
+     * @param integer $nodeId
+     * @param string $title
+     * @param string $content
      */
     public function actionCreate($nodeId, $title, $content)
     {
+        if(!Yii::app()->user->checkAccess('createTopic'))
+            $this->response('Permission Denied', Response::BAD_REQUEST);
+
         $topic = new Topic();
         $topic->setAttributes(array(
             'node_id' => $nodeId,
             'title' => $title,
             'content' => $content,
-            'creator_id' => 1,  // FIXME creator_id not in model
-            'created_by' => 'likai',
+            'creator_id' => Yii::app()->user->id,
+            'created_by' => Yii::app()->user->name,
         ));
 
         if($topic->save())
             $this->response($topic, Response::CREATED);
-        $this->response(array_shift($topic->getErrors()), Response::BAD_REQUEST);
+        $this->response($topic->getErrorMessage(), Response::BAD_REQUEST);
     }
 
     /**
-     * Update topic
+     * 更新话题
      *
      * uri: /topic/{id}
      * method: PUT
+     *
+     * @param integer $id
+     * @param string $title
+     * @param string $content
      */
     public function actionUpdate($id, $title, $content)
     {
         $topic = Topic::model()->findByPk($id);
-        if($topic) {
-            $topic->title = $title;
-            $topic->content = $content;
-            if($topic->save())
-                $this->response($topic, Response::UPDATED);
-            $this->response(array_shift($topic->getErrors()), Response::BAD_REQUEST);
-        }
-        $this->response('Not found topic', Response::BAD_REQUEST);
+        if($topic === null)
+            $this->response('Invalid Topic', Response::BAD_REQUEST);
+        if(!Yii::app()->user->checkAccess('updateTopic', array('topic' => $topic)))
+            $this->response('Permission Denied', Response::BAD_REQUEST);
+        $topic->title = $title;
+        $topic->content = $content;
+        if($topic->save())
+            $this->response($topic, Response::UPDATED);
+        $this->response($topic->getErrorMessage(), Response::BAD_REQUEST);
     }
 
     /**
-     * Read topic
+     * 读取一个话题
      *
      * uri: /topic/{id}
      * method: GET
+     *
+     * @param integer $id
      */
     public function actionRead($id)
     {
         $topic = Topic::model()->findByPk($id);
         if($topic === null)
-            $this->response('Not found topic', Response::NOT_FOUND);
+            $this->response('Invalid Topic', Response::NOT_FOUND);
         $this->response($topic);
     }
 
     /**
-     * Delete topic
+     * 删除一个话题
      *
      * uri: /topic/{id}
      * method: DELETE
+     *
+     * @param integer $id
      */
     public function actionDelete($id)
     {
-        if(Topic::model()->deleteByPk($id))
-        {
+        if(!Yii::app()->user->checkAccess('deleteTopic'))
+            $this->response('Permission Denied', Response::BAD_REQUEST);
+        if(Topic::model()->deleteAllByAttributes(array('id' =>$id, 'creator_id' => Yii::app()->user->id)))
             $this->response('Deleted', Response::DELETED);
-        }
-        $this->response('Not found topic', Response::NOT_FOUND);
+        $this->response('Invalid Topic', Response::NOT_FOUND);
     }
-
-	// -----------------------------------------------------------
-	// Uncomment the following methods and override them if needed
-	/*
-	public function filters()
-	{
-		// return the filter configuration for this controller, e.g.:
-		return array(
-			'inlineFilterName',
-			array(
-				'class'=>'path.to.FilterClass',
-				'propertyName'=>'propertyValue',
-			),
-		);
-	}
-
-	public function actions()
-	{
-		// return external action classes, e.g.:
-		return array(
-			'action1'=>'path.to.ActionClass',
-			'action2'=>array(
-				'class'=>'path.to.AnotherActionClass',
-				'propertyName'=>'propertyValue',
-			),
-		);
-	}
-	*/
 }

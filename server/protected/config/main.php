@@ -1,7 +1,7 @@
 <?php
 
 return array(
-	'basePath' => dirname(__FILE__) . DIRECTORY_SEPARATOR . '..',
+	'basePath' => __DIR__ . DIRECTORY_SEPARATOR . '..',
 	'name' => 'forum',
     'timeZone' => 'Asia/Shanghai',
 
@@ -10,7 +10,7 @@ return array(
 	'import' => array(
 		'application.models.*',
 		'application.components.base.*',
-		'application.components.util.*',
+		'application.components.utils.*',
 		'application.components.api.*',
 	),
 
@@ -25,8 +25,14 @@ return array(
 
 	'components' => array(
 		'user' => array(
+            'class' => 'WebUser',
 			'allowAutoLogin' => false,
 		),
+        'authManager' => array(
+            'class' => 'AuthManager',
+            'authFile' => __DIR__ . '/../data/auth.php',
+            'defaultRoles' => array('guest'),
+        ),
         
 		'urlManager' => array(
 			'urlFormat' => 'path',

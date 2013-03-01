@@ -28,13 +28,12 @@ class Node extends ActiveRecord
 	 */
 	public function rules()
 	{
-		// NOTE: you should only define rules for those attributes that
-		// will receive user inputs.
 		return array(
 			array('listorder, created_at, updated_at, topics_count', 'numerical', 'integerOnly'=>true),
 			array('name, alias, describe', 'length', 'max'=>255),
-			// The following rule is used by search().
-			// @todo Please remove those attributes that should not be searched.
+
+            array('name, alias', 'unique'),
+
 			array('id, name, alias, describe, listorder, created_at, updated_at, topics_count', 'safe', 'on'=>'search'),
 		);
 	}
@@ -44,8 +43,6 @@ class Node extends ActiveRecord
 	 */
 	public function relations()
 	{
-		// NOTE: you may need to adjust the relation name and the related
-		// class name for the relations automatically generated below.
 		return array(
 		);
 	}

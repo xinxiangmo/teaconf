@@ -6,14 +6,22 @@
  * @link http://www.youyuge.com/
  */
 
-
 /**
- * UserIdentity represents the data needed to identity a user.
- * It contains the authentication method that checks if the provided
- * data can identity the user.
+ UserIdentity
+ *
+ * @author likai<youyuge@gmail.com>
+ * @version $Id$
  */
 class UserIdentity extends CUserIdentity
 {
+    public $id;
+
+    public function __construct($id, $password)
+    {
+        $this->id = $this->username = $id;
+        $this->password = $password;
+    }
+
 	/**
 	 * Authenticates a user.
 	 * The example implementation makes sure if the username and password
@@ -24,17 +32,22 @@ class UserIdentity extends CUserIdentity
 	 */
 	public function authenticate()
 	{
-		$users=array(
-			// username => password
-			'demo'=>'demo',
-			'admin'=>'admin',
-		);
-		if(!isset($users[$this->username]))
+        $user = User::model()->findById($this->id);
+        if(!$user)
 			$this->errorCode=self::ERROR_USERNAME_INVALID;
-		elseif($users[$this->username]!==$this->password)
+        elseif(!Bcrypt::verify($this->password, $user->password))
 			$this->errorCode=self::ERROR_PASSWORD_INVALID;
-		else
-			$this->errorCode=self::ERROR_NONE;
+        else
+        {
+            $this->id = $user->id;
+            $this->username = $user->name;
+			$this->errorCode = self::ERROR_NONE;
+        }
 		return !$this->errorCode;
 	}
+
+    public function getId()
+    {
+        return $this->id;
+    }
 }

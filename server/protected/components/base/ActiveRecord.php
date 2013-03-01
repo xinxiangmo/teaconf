@@ -14,9 +14,11 @@
  */
 class ActiveRecord extends CActiveRecord
 {
-    public function unlessAttributes()
+    public function getErrorMessage()
     {
-        return array();
+        $errors = $this->getErrors();
+        $error = array_shift($errors);
+        return $error[0];
     }
 
     public function getIterator()
